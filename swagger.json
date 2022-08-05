@@ -1,0 +1,5385 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "tru.ID Product APIs",
+    "version": "",
+    "contact": {
+      "name": "tru.ID API Team",
+      "email": "feedback@tru.id"
+    },
+    "description": "# Introduction\n\nThe tru.ID API uses [OAuth2](/docs/reference/basics#tag/oauth2) Access Tokens for authentication. Access Tokens are created using the [/token endpoint](/docs/reference/basics#operation/oauth2-token) with a valid `client_id` and `client_secret`. `client_id` and `client_secret` credentials are obtained by [creating a Project](/docs/reference/basics#operation/post-console-v0.2-workspace-projects).\n\nThe [**tru.ID PhoneCheck Workflow** and API](#tag/phone_check_v0.2) confirms the ownership of a mobile phone number by verifying the possession of an active SIM card with the same number. A mobile data session is created to a unique **PhoneCheck URL** for the purpose of this verification. **tru.ID** then resolves a **PhoneCheck Match** between the phone number that the mobile network operator identifies as the owner of the mobile data session and the phone number being verified.\n\nThe [**tru.ID SubscriberCheck Workflow** and API](#tag/subscriber_check_v0.2) combines the functionality offerd by PhoneCheck and SIMCheck into a single API. It confirms the ownership of a mobile phone number and provides information on whether the SIM card associated with the mobile phone number has been changed within the last seven days.\n\nThe [**tru.ID SIMCheck API**](#tag/sim_check_v0.1) information on whether the SIM card associated with the mobile phone number has been changed within the last seven days.\n\nThe [**tru.ID Authenticator API**](#tag/authenticator_v0.1) allows issuing mobile authenticator challenges for different verification factors.\n\n# Authentication\n\n<!-- ReDoc-Inject: <security-definitions> -->"
+  },
+  "servers": [
+    {
+      "url": "https://{data_residency}.api.tru.id",
+      "description": "For accounts with data residency in the EU or IN",
+      "variables": {
+        "data_residency": {
+          "default": "eu",
+          "enum": [
+            "eu",
+            "in"
+          ]
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "phone_check_v0.2",
+      "x-displayName": "v0.2",
+      "description": "Relating to PhoneCheck"
+    },
+    {
+      "name": "phone_check_v0.1",
+      "x-displayName": "v0.1",
+      "description": "Relating to PhoneCheck"
+    },
+    {
+      "name": "subscriber_check_v0.2",
+      "x-displayName": "v0.2",
+      "description": "Relating to SubscriberCheck"
+    },
+    {
+      "name": "subscriber_check_v0.1",
+      "x-displayName": "v0.1",
+      "description": "Relating to SubscriberCheck"
+    },
+    {
+      "name": "sim_check_v0.1",
+      "x-displayName": "v0.1",
+      "description": "Relating to SIMCheck"
+    },
+    {
+      "name": "authenticator_v0.1",
+      "x-displayName": "v0.1",
+      "description": "The Authenticator API enables you to leverage mobile authenticator application such as [tru.ID Authenticator](#tru-id-authenticator),\nGoogle Authenticator, etc. and issue verification challenges that can be satisfied by these applications.\n\n> Before you can use this API, you should [configure your Project](#) accordingly.\n\nThis API exposes two resources: `Factor` and `Challenge`.\n\nA `Factor` represents a verification factor associated with an end-user of your service/application.\nWhen a Factor is created it needs to be [activated through a mobile authenticator](#).\n\nA `Challenge` represent a verification challenge, issued for a given `Factor`. Once a `Challenge` is\nissued, the end-user has to resolve it using the mobile authenticator associated with the `Factor`.\n\nThe choice of challenges depends on the mobile authenticator used to activate the `Factor`. For\nend-users using the [tru.ID Authenticator](#tru-id-authenticator), the choice of challenges are:\n\n* TOTP-based: TOTP PIN codes can be used to verify the challenge\n* Push-based: Push notifications can be triggered and acknowledged to verify the challenge.\n  Users need to register the app with a valid and active SIM card for this choice to be available.\n\nFor other mobile authenticator applications, only TOTP is available.\n\n<a name=\"tru-id-authenticator\"></a>To download the tru.ID Authenticator Application:\n\n* [iOS](https://apps.apple.com/app/id1605545704)\n* [Android](https://play.google.com/store/apps/details?id=id.tru.mobile.authenticator)\n"
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "PhoneCheck",
+      "tags": [
+        "phone_check_v0.2",
+        "phone_check_v0.1"
+      ]
+    },
+    {
+      "name": "SubscriberCheck",
+      "tags": [
+        "subscriber_check_v0.2",
+        "subscriber_check_v0.1"
+      ]
+    },
+    {
+      "name": "SIMCheck",
+      "tags": [
+        "sim_check_v0.1"
+      ]
+    },
+    {
+      "name": "Authenticator",
+      "tags": [
+        "authenticator_v0.1"
+      ]
+    }
+  ],
+  "paths": {
+    "/phone_check/v0.1/checks": {
+      "post": {
+        "summary": "Create a PhoneCheck workflow",
+        "description": "Starts the PhoneCheck workflow.\n",
+        "operationId": "create-phone-check-v0.1",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.1"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create a PhoneCheck",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneCheckCreatePayload"
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "phoneCheckEndStatus": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "summary": "PhoneCheck has reached an end status",
+                "parameters": [
+                  {
+                    "$ref": "#/components/parameters/x-tru-security"
+                  },
+                  {
+                    "$ref": "#/components/parameters/x-tru-callback"
+                  },
+                  {
+                    "$ref": "#/components/parameters/digest"
+                  },
+                  {
+                    "$ref": "#/components/parameters/date"
+                  },
+                  {
+                    "$ref": "#/components/parameters/host"
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/PhoneCheckCallbackPayload"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "The receiving server should return a 200 response to indicate it has processed the callback.\n\nUpon receipt of a non-200 response a retry process will begin. The retry period will start at 10 seconds and increase by 10 seconds until the retry time is one minute at which point the platform will stop retrying.\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PhoneCheck created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PhoneCheckCreateResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidPhoneNumberFormat"
+                    },
+                    {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ProblemDetailsBase"
+                        },
+                        {
+                          "type": "object",
+                          "description": "The country for the supplied `phone_number` is not supported"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of PhoneChecks",
+        "operationId": "get-phone-checks-v0.1",
+        "description": "Get a full list of PhoneChecks or filter by query parameter.",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.1"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCheckCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.1/checks/{check_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get PhoneCheck",
+        "description": "Get a PhoneCheck identified by `check_id`.",
+        "operationId": "get-phone-check-v0.1",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.1/checks/{check_id}/redirect": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Perform the PhoneCheck",
+        "description": "Perform the PhoneCheck identified by `check_id`.",
+        "operationId": "get-phone-check-redirect-v0.1",
+        "tags": [
+          "phone_check_v0.1"
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to the `check_url`.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "400": {
+            "description": "Mobile Network Operator Not Supported",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorNotSupported"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Not a mobile IP",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotMobileIp"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Mobile Network Operator does not Support Redirects",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorRedirectNotSupported"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.1/checks/{check_id}/traces": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a collection of PhoneCheck Traces",
+        "description": "Get Traces of the PhoneCheck identified by `check_id`",
+        "operationId": "get-phone-check-traces-v0.1",
+        "tags": [
+          "phone_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceCollection"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "_embedded": {
+                        "traces": [
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                              }
+                            },
+                            "trace_id": "6f2a0e25fc0caa25",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:58:48.751Z",
+                                "message": "Check create: phone number is reachable"
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.856Z",
+                                "message": "Check balance: authorized",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.864Z",
+                                "message": "Check create: accepted"
+                              }
+                            ]
+                          },
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/7f1bc78ab197ee8b"
+                              }
+                            },
+                            "trace_id": "7f1bc78ab197ee8b",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:59:05.060Z",
+                                "message": "Check balance: confirmed",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.1/checks/{check_id}/traces/{trace_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        },
+        {
+          "name": "trace_id",
+          "description": "The ID of the Trace",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get PhoneCheck Trace",
+        "description": "Get the Trace identified by `trace_id` of the PhoneCheck identified by `check_id`",
+        "operationId": "get-phone-check-trace-v0.1",
+        "tags": [
+          "phone_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceResource"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "trace_id": "6f2a0e25fc0caa25",
+                      "logs": [
+                        {
+                          "timestamp": "2021-02-05T13:58:48.751Z",
+                          "message": "Check create: request accepted"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.824Z",
+                          "message": "Check create: phone number is routable"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.856Z",
+                          "message": "Check balance: authorized",
+                          "attributes": {
+                            "amount": 1,
+                            "currency_code": "API"
+                          }
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.864Z",
+                          "message": "Check create: successful "
+                        }
+                      ],
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.2/checks": {
+      "post": {
+        "summary": "Create a PhoneCheck workflow",
+        "description": "Starts the PhoneCheck workflow.\n",
+        "operationId": "create-phone-check-v0.2",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create a PhoneCheck",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/schemas-PhoneCheckCreatePayload"
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "phoneCheckEndStatus": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "summary": "PhoneCheck has reached an end status",
+                "parameters": [
+                  {
+                    "$ref": "#/components/parameters/x-tru-security"
+                  },
+                  {
+                    "$ref": "#/components/parameters/x-tru-callback"
+                  },
+                  {
+                    "$ref": "#/components/parameters/digest"
+                  },
+                  {
+                    "$ref": "#/components/parameters/date"
+                  },
+                  {
+                    "$ref": "#/components/parameters/host"
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/PhoneCheckCallbackPayload"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "The receiving server should return a 200 response to indicate it has processed the callback.\n\nUpon receipt of a non-200 response a retry process will begin. The retry period will start at 10 seconds and increase by 10 seconds until the retry time is one minute at which point the platform will stop retrying.\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PhoneCheck created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/schemas-PhoneCheckCreateResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidPhoneNumberFormat"
+                    },
+                    {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ProblemDetailsBase"
+                        },
+                        {
+                          "type": "object",
+                          "description": "The country for the supplied `phone_number` is not supported"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of PhoneChecks",
+        "operationId": "get-phone-checks-v0.2",
+        "description": "Get a full list of PhoneChecks or filter by query parameter.",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCheckCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.2/checks/{check_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get PhoneCheck",
+        "description": "Get a PhoneCheck identified by `check_id`.",
+        "operationId": "get-phone-check-v0.2",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Complete PhoneCheck",
+        "description": "Complete a PhoneCheck identified by `check_id`. NB: the device needs to visit the `check_url` to get the code which is redeemed against the PhoneCheck result before this endpoint, otherwise a 404 will be returned.",
+        "operationId": "patch-phone-check-v0.2",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "requestBody": {
+          "description": "JSON payload to update a PhoneCheck",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneCheckPatchPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCheckPatchPartial"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.2/checks/{check_id}/redirect": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Perform the PhoneCheck",
+        "description": "Perform the PhoneCheck identified by `check_id`. The device needs to perform this action over a cellular data connection.",
+        "operationId": "get-phone-check-redirect-v0.2",
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "400": {
+            "description": "Mobile Network Operator Not Supported",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorNotSupported"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Not a mobile IP",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotMobileIp"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Mobile Network Operator does not Support Redirects",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorRedirectNotSupported"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.2/checks/{check_id}/traces": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a collection of PhoneCheck Traces",
+        "description": "Get Traces of the PhoneCheck identified by `check_id`",
+        "operationId": "get-phone-check-traces-v0.2",
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceCollection"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "_embedded": {
+                        "traces": [
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                              }
+                            },
+                            "trace_id": "6f2a0e25fc0caa25",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:58:48.751Z",
+                                "message": "Check create: phone number is reachable"
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.856Z",
+                                "message": "Check balance: authorized",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.864Z",
+                                "message": "Check create: accepted"
+                              }
+                            ]
+                          },
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/7f1bc78ab197ee8b"
+                              }
+                            },
+                            "trace_id": "7f1bc78ab197ee8b",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:59:05.060Z",
+                                "message": "Check balance: confirmed",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/phone_check/v0.2/checks/{check_id}/traces/{trace_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the PhoneCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        },
+        {
+          "name": "trace_id",
+          "description": "The ID of the Trace",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get PhoneCheck Trace",
+        "description": "Get the Trace identified by `trace_id` of the PhoneCheck identified by `check_id`",
+        "operationId": "get-phone-check-trace-v0.2",
+        "tags": [
+          "phone_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceResource"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "trace_id": "6f2a0e25fc0caa25",
+                      "logs": [
+                        {
+                          "timestamp": "2021-02-05T13:58:48.751Z",
+                          "message": "Check create: request accepted"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.824Z",
+                          "message": "Check create: phone number is routable"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.856Z",
+                          "message": "Check balance: authorized",
+                          "attributes": {
+                            "amount": 1,
+                            "currency_code": "API"
+                          }
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.864Z",
+                          "message": "Check create: successful "
+                        }
+                      ],
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/phone_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.2/checks": {
+      "post": {
+        "summary": "Create an SubscriberCheck workflow",
+        "description": "Starts the SubscriberCheck workflow.\n",
+        "operationId": "create-subscriber-check-v0.2",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create an SubscriberCheck",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriberCheckCreatePayload"
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "phoneCheckEndStatus": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "summary": "SubscriberCheck has reached an end status",
+                "parameters": [
+                  {
+                    "$ref": "#/components/parameters/x-tru-security"
+                  },
+                  {
+                    "$ref": "#/components/parameters/x-tru-callback"
+                  },
+                  {
+                    "$ref": "#/components/parameters/digest"
+                  },
+                  {
+                    "$ref": "#/components/parameters/date"
+                  },
+                  {
+                    "$ref": "#/components/parameters/host"
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/SubscriberCheckCallbackPayload"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "The receiving server should return a 200 response to indicate it has processed the callback.\n\nUpon receipt of a non-200 response a retry process will begin. The retry period will start at 10 seconds and increase by 10 seconds until the retry time is one minute at which point the platform will stop retrying.\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SubscriberCheck created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SubscriberCheckCreateResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidPhoneNumberFormat"
+                    },
+                    {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ProblemDetailsBase"
+                        },
+                        {
+                          "type": "object",
+                          "description": "The country for the supplied `phone_number` is not supported"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of SubscriberChecks",
+        "operationId": "get-subscriber-checks-v0.2",
+        "description": "Get a full list of SubscriberChecks or filter by query parameter.",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriberCheckCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.2/checks/{check_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get SubscriberCheck",
+        "description": "Get a SubscriberCheck identified by `check_id`.",
+        "operationId": "get-subscriber-check-v0.2",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriberCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "404": {
+            "description": "Check Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Complete SubscriberCheck",
+        "description": "Complete a SubscriberCheck identified by `check_id`. NB: the device needs to visit the `check_url` before this endpoint, otherwise a 404 will be returned.",
+        "operationId": "patch-subscriber-check-v0.2",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "requestBody": {
+          "description": "JSON payload to update a PhoneCheck",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriberCheckPatchPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriberCheckPatchPartial"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.2/checks/{check_id}/redirect": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Perform the SubscriberCheck",
+        "description": "Perform the SubscriberCheck identified by `check_id`. The device needs to perform this action over a cellular data connection.",
+        "operationId": "get-subscriber-check-redirect-v0.2",
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriberCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "400": {
+            "description": "Mobile Network Operator Not Supported",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorNotSupported"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Not a mobile IP",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotMobileIp"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Mobile Network Operator does not Support Redirects",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorRedirectNotSupported"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.2/checks/{check_id}/traces": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a collection of SubscriberCheck Traces",
+        "description": "Get Traces of the SubscriberCheck identified by `check_id`",
+        "operationId": "get-subscriber-check-traces-v0.2",
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceCollection"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "_embedded": {
+                        "traces": [
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/subscriber_check/v0.2/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                              }
+                            },
+                            "trace_id": "6f2a0e25fc0caa25",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:58:48.751Z",
+                                "message": "Check create: phone number is reachable"
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.856Z",
+                                "message": "Check balance: authorized",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.864Z",
+                                "message": "Check create: accepted"
+                              }
+                            ]
+                          },
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/subscriber_check/v0.2/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/7f1bc78ab197ee8b"
+                              }
+                            },
+                            "trace_id": "7f1bc78ab197ee8b",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:59:05.060Z",
+                                "message": "Check balance: confirmed",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/subscriber_check/v0.2/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.2/checks/{check_id}/traces/{trace_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        },
+        {
+          "name": "trace_id",
+          "description": "The ID of the of the Trace",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get SubscriberCheck Trace",
+        "description": "Get the Trace identified by `trace_id`  of the SubscriberCheck identified by `check_id`",
+        "operationId": "get-subscriber-check-trace-v0.2",
+        "tags": [
+          "subscriber_check_v0.2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceResource"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "trace_id": "6f2a0e25fc0caa25",
+                      "logs": [
+                        {
+                          "timestamp": "2021-02-05T13:58:48.751Z",
+                          "message": "Check create: phone number is reachable"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.856Z",
+                          "message": "Check balance: authorized",
+                          "attributes": {
+                            "amount": 1,
+                            "currency": "API"
+                          }
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.864Z",
+                          "message": "Check create: accepted",
+                          "_links": {
+                            "self": {
+                              "href": "https://eu.api.tru.id/subscriber_check/v0.2/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.1/checks": {
+      "post": {
+        "summary": "Create an SubscriberCheck workflow",
+        "description": "Starts the SubscriberCheck workflow.\n",
+        "operationId": "create-subscriber-check",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.1"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create an SubscriberCheck",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/schemas-SubscriberCheckCreatePayload"
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "phoneCheckEndStatus": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "summary": "SubscriberCheck has reached an end status",
+                "parameters": [
+                  {
+                    "$ref": "#/components/parameters/x-tru-security"
+                  },
+                  {
+                    "$ref": "#/components/parameters/x-tru-callback"
+                  },
+                  {
+                    "$ref": "#/components/parameters/digest"
+                  },
+                  {
+                    "$ref": "#/components/parameters/date"
+                  },
+                  {
+                    "$ref": "#/components/parameters/host"
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/SubscriberCheckCallbackPayload"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "The receiving server should return a 200 response to indicate it has processed the callback.\n\nUpon receipt of a non-200 response a retry process will begin. The retry period will start at 10 seconds and increase by 10 seconds until the retry time is one minute at which point the platform will stop retrying.\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SubscriberCheck created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SubscriberCheckCreateResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidPhoneNumberFormat"
+                    },
+                    {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ProblemDetailsBase"
+                        },
+                        {
+                          "type": "object",
+                          "description": "The country for the supplied `phone_number` is not supported"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of SubscriberChecks",
+        "operationId": "get-subscriber-checks",
+        "description": "Get a full list of SubscriberChecks or filter by query parameter.",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.1"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/schemas-SubscriberCheckCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.1/checks/{check_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get SubscriberCheck",
+        "description": "Get a SubscriberCheck identified by `check_id`.",
+        "operationId": "get-subscriber-check",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "subscriber_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/schemas-SubscriberCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.1/checks/{check_id}/redirect": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Perform the SubscriberCheck",
+        "description": "Perform the SubscriberCheck identified by `check_id`.",
+        "operationId": "get-subscriber-check-redirect",
+        "tags": [
+          "subscriber_check_v0.1"
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to the `check_url`.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              }
+            }
+          },
+          "400": {
+            "description": "Mobile Network Operator Not Supported",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorNotSupported"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Not a mobile IP",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotMobileIp"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Mobile Network Operator does not Support Redirects",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorRedirectNotSupported"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.1/checks/{check_id}/traces": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a collection of SubscriberCheck Traces",
+        "description": "Get Traces of the SubscriberCheck identified by `check_id`",
+        "operationId": "get-subscriber-check-traces",
+        "tags": [
+          "subscriber_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceCollection"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "_embedded": {
+                        "traces": [
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/subscriber_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                              }
+                            },
+                            "trace_id": "6f2a0e25fc0caa25",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:58:48.751Z",
+                                "message": "Check create: phone number is reachable"
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.856Z",
+                                "message": "Check balance: authorized",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.864Z",
+                                "message": "Check create: accepted"
+                              }
+                            ]
+                          },
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/subscriber_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/7f1bc78ab197ee8b"
+                              }
+                            },
+                            "trace_id": "7f1bc78ab197ee8b",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:59:05.060Z",
+                                "message": "Check balance: confirmed",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/subscriber_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subscriber_check/v0.1/checks/{check_id}/traces/{trace_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SubscriberCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        },
+        {
+          "name": "trace_id",
+          "description": "The ID of the of the Trace",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get SubscriberCheck Trace",
+        "description": "Get the Trace identified by `trace_id`  of the SubscriberCheck identified by `check_id`",
+        "operationId": "get-subscriber-check-trace",
+        "tags": [
+          "subscriber_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceResource"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "trace_id": "6f2a0e25fc0caa25",
+                      "logs": [
+                        {
+                          "timestamp": "2021-02-05T13:58:48.751Z",
+                          "message": "Check create: phone number is reachable"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.856Z",
+                          "message": "Check balance: authorized",
+                          "attributes": {
+                            "amount": 1,
+                            "currency": "API"
+                          }
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.864Z",
+                          "message": "Check create: accepted",
+                          "_links": {
+                            "self": {
+                              "href": "https://eu.api.tru.id/subscriber_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sim_check/v0.1/checks": {
+      "post": {
+        "summary": "Create a SIMCheck",
+        "description": "Starts the SIMCheck\n",
+        "operationId": "create-sim-check",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "sim_check_v0.1"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create a SIMCheck",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimCheckCreatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SIMCheck created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SimCheck"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "description": "The current status of the SIMCheck",
+                          "type": "string",
+                          "enum": [
+                            "COMPLETED",
+                            "ERROR"
+                          ],
+                          "example": "COMPLETED"
+                        },
+                        "snapshot_balance": {
+                          "description": "The workspace balance in `charge_currency` taking into account the `charge_amount`.\nThis property is not persisted and is only returned when the SIMCheck is initially created.\n",
+                          "type": "number",
+                          "example": 100
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Mobile Network Operator Not Supported",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNetworkOperatorNotSupported"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Not a mobile IP",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotMobileIp"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of SIMChecks",
+        "operationId": "get-sim-checks",
+        "description": "Get a full list of SIMChecks or filter by query parameter.",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "sim_check_v0.1"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimCheckCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sim_check/v0.1/checks/{check_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SIMCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get SIMCheck",
+        "description": "Get a SIMCheck identified by `check_id`.",
+        "operationId": "get-sim-check",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "sim_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimCheck"
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sim_check/v0.1/checks/{check_id}/traces": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SIMCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a collection of SIMCheck Traces",
+        "description": "Get Traces of the SIMCheck identified by `check_id`",
+        "operationId": "get-sim-check-traces",
+        "tags": [
+          "sim_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceCollection"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "_embedded": {
+                        "traces": [
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/sim_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                              }
+                            },
+                            "trace_id": "6f2a0e25fc0caa25",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:58:48.751Z",
+                                "message": "Check create: phone number is reachable"
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.856Z",
+                                "message": "Check balance: authorized",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              },
+                              {
+                                "timestamp": "2021-02-05T13:58:48.864Z",
+                                "message": "Check create: accepted"
+                              }
+                            ]
+                          },
+                          {
+                            "_links": {
+                              "self": {
+                                "href": "https://eu.api.tru.id/sim_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/7f1bc78ab197ee8b"
+                              }
+                            },
+                            "trace_id": "7f1bc78ab197ee8b",
+                            "logs": [
+                              {
+                                "timestamp": "2021-02-05T13:59:05.060Z",
+                                "message": "Check balance: confirmed",
+                                "attributes": {
+                                  "amount": 1,
+                                  "currency": "API"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/sim_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sim_check/v0.1/checks/{check_id}/traces/{trace_id}": {
+      "parameters": [
+        {
+          "name": "check_id",
+          "description": "The ID of the SIMCheck",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        },
+        {
+          "name": "trace_id",
+          "description": "The ID of the of the trace",
+          "schema": {
+            "type": "string"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get Simcheck Trace",
+        "description": "Get the Trace identified by `trace_id`  of the SIMCheck identified by `check_id`",
+        "operationId": "get-sim-check-trace",
+        "tags": [
+          "sim_check_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceResource"
+                },
+                "examples": {
+                  "basic": {
+                    "value": {
+                      "trace_id": "6f2a0e25fc0caa25",
+                      "logs": [
+                        {
+                          "timestamp": "2021-02-05T13:58:48.751Z",
+                          "message": "Check create: request accepted"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.824Z",
+                          "message": "Check create: phone number is routable"
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.856Z",
+                          "message": "Check balance: authorized",
+                          "attributes": {
+                            "amount": 1,
+                            "currency_code": "API"
+                          }
+                        },
+                        {
+                          "timestamp": "2021-02-05T13:58:48.864Z",
+                          "message": "Check create: successful"
+                        }
+                      ],
+                      "_links": {
+                        "self": {
+                          "href": "https://eu.api.tru.id/sim_check/v0.1/checks/857b1bab-c2e8-41ec-9f76-9695ec78b91b/traces/6f2a0e25fc0caa25"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckNotFound"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TraceNotFound"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Trace Gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceGone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authenticator/v0.1/factors": {
+      "post": {
+        "summary": "Create a Factor",
+        "description": "Create a new Factor. This factor needs to be activated through an mobile authenticator application\ne.g. [tru.ID Authenticator](#tru-id-authenticator), Google Authenticator, etc.\n\nTo activate the resulting factor use the [Update the Factor](#operation/update-authenticator-factor) endpoint.\n",
+        "operationId": "create-authenticator-factor",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create a Factor",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactorCreatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Factor created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Factor"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequest"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of Factors",
+        "description": "Get a full list of Factors or filter by query parameters",
+        "operationId": "get-authenticator-factors",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactorCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authenticator/v0.1/factors/{factor_id}": {
+      "parameters": [
+        {
+          "name": "factor_id",
+          "description": "The ID of the Factor",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get Factor",
+        "description": "Get a Factor identified by `factor_id`",
+        "operationId": "get-authenticator-factor",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Factor"
+                    },
+                    {
+                      "example": {
+                        "status": "ACTIVE"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factor Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a Factor",
+        "description": "Update the Factor identified by `project_id`",
+        "operationId": "update-authenticator-factor",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "requestBody": {
+          "description": "The JSON-PATCH Payload for updating the factor",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactorPatchPayload"
+              },
+              "examples": {
+                "activate_factor": {
+                  "summary": "Activate a factor with the code received from the user's device",
+                  "value": [
+                    {
+                      "op": "add",
+                      "path": "/code",
+                      "value": "123456"
+                    }
+                  ]
+                },
+                "deactivate_factor": {
+                  "summary": "De-activate an existing factor and recycle the `external_user_id` so it can be used again",
+                  "value": [
+                    {
+                      "op": "replace",
+                      "path": "/status",
+                      "value": "INACTIVE"
+                    },
+                    {
+                      "op": "replace",
+                      "path": "/external_user_id",
+                      "value": "disabled_<old_user_id>"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Factor"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factor Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authenticator/v0.1/factors/{factor_id}/challenges": {
+      "parameters": [
+        {
+          "name": "factor_id",
+          "description": "The ID of the Factor",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "post": {
+        "summary": "Create a Challenge",
+        "description": "Create a new Challenge for the given Factor.\n\nThe type of challenge will depend on the parent Factor:\n\n* if the Factor type is `TOTP` the challenge will be a TOTP challenge\n* if the Factor type is `PUSH` the challenge will be a PUSH notification challenge\n\nPush challenges can only be created by users of the [tru.ID Authenticator](#tru-id-authenticator), which\nhave successfully verified their SIM card.\n",
+        "operationId": "create-authenticator-challenge",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "requestBody": {
+          "description": "JSON payload to create a Challenge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengeCreatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Challenge created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Challenge"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequest"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get a collection of Challenges",
+        "description": "Get a full list of Challenges, for the given Factor, or filter by query parameters",
+        "operationId": "get-authenticator-challenges",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/pageNumber"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeCollection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authenticator/v0.1/factors/{factor_id}/challenges/{challenge_id}": {
+      "parameters": [
+        {
+          "name": "factor_id",
+          "description": "The ID of the Factor",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        },
+        {
+          "name": "challenge_id",
+          "description": "The ID of the Challenge",
+          "schema": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get Challenge",
+        "description": "Get a Challenge identified by `challenge_id`",
+        "operationId": "get-authenticator-challenge",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Challenge"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Challenge Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Resolve a TOTP Challenge",
+        "description": "Resolve the TOTP challenge identified by `challenge_id`",
+        "operationId": "update-authenticator-challenge",
+        "security": [
+          {
+            "ProjectBearerAuth": []
+          }
+        ],
+        "tags": [
+          "authenticator_v0.1"
+        ],
+        "requestBody": {
+          "description": "The JSON-PATCH Payload for resolving the Challenge",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengePatchPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "Access-Control-Allow-Origin": {
+                "$ref": "#/components/headers/Access-Control-Allow-Origin-All"
+              }
+            },
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Challenge"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factor Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ProjectBearerAuth": {
+        "description": "The tru.ID APIs expect the bearer token to be a [OAuth2 Access Token](https://tools.ietf.org/html/rfc6749#section-1.4). The access token should be within the `Authorization` HTTP header.\ne.g. `Authorization: Bearer {access_token}`. See [Create an Access Token](#operation/oauth2-token).\n\nThe token should be associated with **tru.ID** Project. These are created using a Project `client_id` and `client_secret`. See [Create an Access Token](#operation/oauth2-token).\n",
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "parameters": {
+      "pageSize": {
+        "name": "size",
+        "description": "The number of items to be returned for the page being requested",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "example": 10,
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "pageNumber": {
+        "name": "page",
+        "description": "The page number being requested",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "example": 10,
+          "default": 1,
+          "minimum": 1
+        }
+      },
+      "search": {
+        "name": "search",
+        "description": "An RSQL query. For more information see the [grammar and semantics](https://github.com/jirutka/rsql-parser#grammar-and-semantic) and related [examples](https://github.com/jirutka/rsql-parser#examples).",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "sort": {
+        "name": "sort",
+        "description": "How the returned collection will be sorted. The string should be in the format `{property},{direction}`.\n\n- `property` is queryable field within the resource.\n- `direction` can be either `asc` for ascending or `desc` for descending.\n\nExamples:\n\n- `name,asc`\n- `name,desc`\n- `created_at,asc`\n- `created_at,desc`\n",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "x-tru-security": {
+        "name": "Authorization",
+        "in": "header",
+        "description": "To be used for [HTTP message signing authentication](/docs/authentication#signed) in the verification that the callback came from the tru.ID platform and was signed with a tru.ID private key and thus can be read with a tru.ID public key.\n\nThe value for the header is in the format `Signature keyId=\"{key_id}\",algorithm=\"{algorithm_value}\",headers=\"{headers_value}\",signature=\"{signature_value}\"`.\n\n- `keyId` - identifies the public key to be used to check the `signature`\n- `algorithm` - the algorithm used to craete the `signature`\n- `headers` - the header content used in the generation of the `signature`. `headers` contains the following which should be converted to real values:\n  - `(request-target)` - the request method and the path and query of the effective request URI ([examples](https://tools.ietf.org/html/draft-ietf-httpbis-message-signatures-00#section-2.4))\n  - `host` - the value of `Host` header\n  - `date` - the value of `Date` header\n  - `x-tru-callback` - the value of `x-tru-callback` header\n  - `digest` - the value of `Digest` header\n- `signature` - the signiture for the signed request\n\nFor more details see [Signed HTTP Messages](/docs/authentication#signed).\n",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "x-tru-callback": {
+        "name": "x-tru-callback",
+        "in": "header",
+        "description": "Header used to provide additional context about the callback.\n",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "phone_check",
+            "subscriber_check"
+          ]
+        }
+      },
+      "digest": {
+        "name": "digest",
+        "in": "header",
+        "description": "The body contents hashed with the algoritm identified in the `Signature` header by `algorithm={algoritm_value}` and then Base64 encoded. For example, `digest: SHA-256=hex(SHA256(Body))`.\n",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "date": {
+        "name": "date",
+        "in": "header",
+        "description": "The date and time at which the message was originated\n",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "host": {
+        "name": "host",
+        "in": "header",
+        "description": "The host and port number of the server to which the request is being sent\n",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "headers": {
+      "X-RateLimit-Limit": {
+        "description": "Request limit per hour",
+        "schema": {
+          "type": "integer"
+        },
+        "example": 100,
+        "required": true
+      },
+      "X-RateLimit-Remaining": {
+        "description": "Remaining requests for the hour",
+        "schema": {
+          "type": "integer"
+        },
+        "example": 94,
+        "required": true
+      },
+      "Access-Control-Allow-Origin-All": {
+        "description": "Allow CORS",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "*"
+          ]
+        },
+        "required": true
+      },
+      "Location": {
+        "description": "Used in a 301 or 301 redirect",
+        "schema": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "schemas": {
+      "PageBasedPaginationBody": {
+        "description": "Used to enable paging and within the body payload of collections",
+        "type": "object",
+        "properties": {
+          "page": {
+            "description": "Pagination properties",
+            "type": "object",
+            "properties": {
+              "size": {
+                "description": "The number of records per page",
+                "type": "integer",
+                "example": 10
+              },
+              "number": {
+                "description": "The current page number",
+                "type": "integer",
+                "example": 1
+              },
+              "total_pages": {
+                "description": "The total number of pages",
+                "type": "integer",
+                "example": 10
+              },
+              "total_elements": {
+                "description": "The total number of records",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "size",
+              "number",
+              "total_pages",
+              "total_elements"
+            ]
+          }
+        },
+        "required": [
+          "page"
+        ]
+      },
+      "Link.v1": {
+        "title": "Link",
+        "description": "A link to a resource",
+        "type": "object",
+        "properties": {
+          "href": {
+            "description": "The URL for the resource",
+            "type": "string",
+            "example": "http://example.com"
+          }
+        },
+        "required": [
+          "href"
+        ]
+      },
+      "PaginationLinks.v1": {
+        "title": "PaginationLinks",
+        "type": "object",
+        "description": "Links to enable page-based pagination over collections.",
+        "properties": {
+          "first": {
+            "description": "URL to the first page of records",
+            "$ref": "#/components/schemas/Link.v1"
+          },
+          "last": {
+            "description": "URL to the last page of records",
+            "$ref": "#/components/schemas/Link.v1"
+          },
+          "next": {
+            "description": "URL to the next page of records",
+            "$ref": "#/components/schemas/Link.v1"
+          },
+          "prev": {
+            "description": "URL to the previous page of records",
+            "$ref": "#/components/schemas/Link.v1"
+          },
+          "self": {
+            "description": "URL to the current page of records",
+            "$ref": "#/components/schemas/Link.v1"
+          }
+        },
+        "required": [
+          "first",
+          "last",
+          "next",
+          "prev",
+          "self"
+        ]
+      },
+      "CheckStatus": {
+        "description": "- `ACCEPTED`: The Check request has been accepted by the platform\n- `PENDING`: The Check request has been triggered but has not yet completed\n- `COMPLETED`: The Check request has completed\n- `EXPIRED`: The `check_url` has been triggered but never completed in the default TTL (120s)\n- `ERROR`: An error occurred.\n",
+        "type": "string",
+        "enum": [
+          "ACCEPTED",
+          "PENDING",
+          "COMPLETED",
+          "EXPIRED",
+          "ERROR"
+        ],
+        "example": "ACCEPTED"
+      },
+      "Currency": {
+        "description": "A currency indicator",
+        "type": "string",
+        "enum": [
+          "API",
+          "USD",
+          "GBP",
+          "EUR"
+        ],
+        "example": "API"
+      },
+      "ISODateTime": {
+        "description": "A DateTime conforming to ISO 8601 specifications",
+        "type": "string",
+        "format": "Datetime ISO 8601",
+        "example": "2020-06-01T16:43:30+00:00"
+      },
+      "CheckPartial": {
+        "type": "object",
+        "properties": {
+          "check_id": {
+            "description": "The unique ID of the Check resource",
+            "type": "string"
+          },
+          "reference_id": {
+            "description": "A field that you can use to track the check request against your own internal reference. Do not use any Personally identifiable information (PII).",
+            "type": "string",
+            "example": "my_internal_reference"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "charge_amount": {
+            "description": "The amount that was charge for this Check",
+            "type": "number"
+          },
+          "charge_currency": {
+            "description": "The currency the `charge_amount` was made in.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ]
+          },
+          "created_at": {
+            "description": "When the Check was created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "updated_at": {
+            "description": "When the Check was last updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "network_id": {
+            "description": "The network identifier. Only returned when `status` is `\"COMPLETED\"`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "charge_amount",
+          "charge_currency",
+          "created_at"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00"
+        }
+      },
+      "schemas-CheckPartial": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckPartial"
+          }
+        ]
+      },
+      "CheckErrorCode": {
+        "description": "An indicator of why the Check failed.",
+        "type": "string",
+        "enum": [
+          "not_mobile_ip",
+          "mno_not_supported",
+          "mno_timeout"
+        ]
+      },
+      "schemas-CheckErrorCode": {
+        "description": "An indicator of why the Check failed. Returned only when `status` is \"ERROR\".",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckErrorCode"
+          }
+        ]
+      },
+      "PhoneCheckPartial": {
+        "description": "A PhoneCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "error_code": {
+                "$ref": "#/components/schemas/schemas-CheckErrorCode"
+              }
+            }
+          }
+        ]
+      },
+      "PhoneCheck": {
+        "description": "Phone Check Resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PhoneCheckPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "match": {
+                "description": "Identifies if the Check request resulted in a successful match between the phone number and the mobile connection that the\n`check_url` was accessed from.\n",
+                "type": "boolean"
+              }
+            },
+            "example": {
+              "match": true
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "description": "The link to the current resource",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  },
+                  "check_url": {
+                    "description": "A URL that the mobile client must navigate as part of the PhoneCheck verification flow.",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "self"
+                ]
+              }
+            }
+          }
+        ],
+        "required": [
+          "_links"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "match": true,
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "network_id": "23599",
+          "ttl": 120,
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/phone_checks/v0.1/checks/{check_id}"
+            }
+          }
+        }
+      },
+      "PhoneCheckCollection": {
+        "description": "A PhoneCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageBasedPaginationBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "$ref": "#/components/schemas/PaginationLinks.v1"
+              },
+              "_embedded": {
+                "description": "Resources related to the resource request",
+                "type": "object",
+                "properties": {
+                  "checks": {
+                    "description": "The PhoneChecks within the collection",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/PhoneCheck"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CheckCreatePayload": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "description": "The phone number to be checked in [E.164 format](https://www.itu.int/rec/T-REC-E.164-201011-I/en)",
+            "type": "string",
+            "example": "447700900000",
+            "format": "E.164"
+          },
+          "phone_ip": {
+            "description": "Optional. The IP address (IPv4 or IPv6 format) of the mobile device associated with the phone number",
+            "type": "string",
+            "example": "127.0.0.1"
+          },
+          "reference_id": {
+            "description": "Optional. A field that you can use to track the check request against your own internal reference. Do not use any Personally identifiable information (PII).",
+            "type": "string",
+            "example": "my_internal_reference"
+          },
+          "callback_url": {
+            "description": "Optional. A public URL that will receive an asynchronous POST request as a notification when the Check achieves an end `status` of `COMPLETED`, `EXPIRED` or `ERROR`.\n\nThe `callback_url` used for an individual Check will override a `callback_url` set within Project configuration.\n",
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/callback"
+          }
+        },
+        "required": [
+          "phone_number"
+        ],
+        "example": {
+          "phone_number": "447700900000",
+          "reference_id": "my_internal_reference"
+        }
+      },
+      "schemas-CheckCreatePayload": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckCreatePayload"
+          }
+        ]
+      },
+      "PhoneCheckCreatePayload": {
+        "description": "Payload for creating a PhoneCheck",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckCreatePayload"
+          }
+        ]
+      },
+      "CheckCreatePartial": {
+        "type": "object",
+        "properties": {
+          "check_id": {
+            "description": "The unique ID of the Check resource",
+            "type": "string"
+          },
+          "reference_id": {
+            "description": "A field that you can use to track the check request against your own internal reference. Do not use any Personally identifiable information (PII).",
+            "type": "string",
+            "example": "my_internal_reference"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "charge_amount": {
+            "description": "The amount that was charge for this Check",
+            "type": "number"
+          },
+          "charge_currency": {
+            "description": "The currency the `charge_amount` was made in.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ]
+          },
+          "created_at": {
+            "description": "When the Check was created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "updated_at": {
+            "description": "When the Check was last updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "ttl": {
+            "description": "(Time to live) The number of seconds after which the Check will expire and the `status` will change to `EXPIRED`.\n",
+            "type": "integer",
+            "default": 120,
+            "example": 120
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "charge_amount",
+          "charge_currency",
+          "created_at",
+          "ttl"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "ttl": 120
+        }
+      },
+      "schemas-CheckCreatePartial": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckCreatePartial"
+          }
+        ]
+      },
+      "PhoneCheckCreatePartial": {
+        "description": "A PhoneCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckCreatePartial"
+          }
+        ]
+      },
+      "PhoneCheckCreateResponse": {
+        "description": "A PhoneCheck Created response",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PhoneCheckCreatePartial"
+          }
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "ACCEPTED",
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "snapshot_balance": 99,
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "ttl": 120,
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/phone_checks/v0.1/checks/{check_id}"
+            },
+            "check_url": {
+              "href": "https://eu.api.tru.id/phone_checks/v0.1/checks/{check_id}/redirect"
+            }
+          }
+        }
+      },
+      "ProblemDetailsBase": {
+        "description": "Base for HTTP API Problem Details",
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the problem type.",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem type.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this occurrence of the problem.",
+            "type": "string"
+          }
+        }
+      },
+      "InvalidPhoneNumberFormat": {
+        "description": "The provided phone number did not adhere to the [E.164 phone number format](https://www.itu.int/rec/T-REC-E.164-201011-I/en). To be used with HTTP Status Code 400.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#phone_format_invalid",
+          "title": "Bad Request",
+          "detail": "Phone Number Validation Error"
+        }
+      },
+      "PhoneCheckCallbackPartial": {
+        "description": "A PhoneCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckPartial"
+          }
+        ]
+      },
+      "PhoneCheckCallbackPayload": {
+        "description": "The payload sent to a callback URL upon a PhoneCheck reaching an end state.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PhoneCheckCallbackPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "match": {
+                "description": "Identifies if the Check request resulted in a successful match between the phone number and the mobile connection that the\n`check_url` was accessed from.\n",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "match"
+            ],
+            "example": {
+              "match": true
+            }
+          }
+        ]
+      },
+      "UUID": {
+        "description": "a Universally Unique IDentifier",
+        "type": "string",
+        "format": "uuid",
+        "pattern": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+      },
+      "CheckNotFound": {
+        "description": "Check Not Found",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#check_not_found",
+          "title": "Not Found",
+          "detail": "Check Not Found"
+        }
+      },
+      "MobileNetworkOperatorNotSupported": {
+        "description": "The Mobile Network Operator (MNO) associated with phone number is not supported.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#mno_not_supported",
+          "title": "Bad Request",
+          "detail": "Mobile Network Operator Not Supported"
+        }
+      },
+      "NotMobileIp": {
+        "description": "Not a mobile IP.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#not_mobile_ip",
+          "title": "Precondition Failed",
+          "detail": "Not a mobile IP"
+        }
+      },
+      "MobileNetworkOperatorRedirectNotSupported": {
+        "description": "The Mobile Network Operator (MNO) associated with phone number does not support redirects.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#mno_redirect_unsupported",
+          "title": "Not Implemented",
+          "detail": "Mobile Network Operator Not Supporting Redirect"
+        }
+      },
+      "Log": {
+        "description": "A Log Entry",
+        "type": "object",
+        "x-tags": [
+          "trace"
+        ],
+        "required": [
+          "message",
+          "timestamp"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The Log Entry message"
+          },
+          "timestamp": {
+            "description": "When the Log Entry occured",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Extra fields related to the Log Entry",
+            "example": {
+              "amount": "1,",
+              "currency": "API",
+              "status": "COMPLETED"
+            }
+          }
+        }
+      },
+      "TraceResource": {
+        "description": "A Trace resource",
+        "type": "object",
+        "x-tags": [
+          "trace"
+        ],
+        "required": [
+          "logs",
+          "trace_id"
+        ],
+        "properties": {
+          "logs": {
+            "description": "Logs of the corresponding Trace ordered by timestamp ascending.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Log"
+            }
+          },
+          "trace_id": {
+            "description": "The unique ID of the Trace resource",
+            "type": "string"
+          },
+          "_links": {
+            "description": "Links related to the current resource",
+            "type": "object",
+            "properties": {
+              "self": {
+                "description": "The link to the current resouce",
+                "$ref": "#/components/schemas/Link.v1"
+              }
+            },
+            "required": [
+              "self"
+            ]
+          }
+        }
+      },
+      "TraceCollection": {
+        "description": "Collection of Trace resources ordered by oldest to latest.",
+        "type": "object",
+        "properties": {
+          "_links": {
+            "description": "Links related to the current resource",
+            "type": "object",
+            "properties": {
+              "self": {
+                "description": "The link to the current resource",
+                "$ref": "#/components/schemas/Link.v1"
+              }
+            }
+          },
+          "_embedded": {
+            "description": "Collection of Trace resources",
+            "type": "object",
+            "properties": {
+              "traces": {
+                "description": "collection of Traces",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TraceResource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TraceNotFound": {
+        "description": "Trace Not Found",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#trace_not_found",
+          "title": "Not Found",
+          "detail": "Trace Not Found"
+        }
+      },
+      "TraceGone": {
+        "description": "After seven days, the traces for the check expires resulting in a Gone response.\n",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#trace_gone",
+          "title": "Gone",
+          "detail": "Traces have expired"
+        }
+      },
+      "components-schemas-CheckCreatePayload": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckCreatePayload"
+          }
+        ],
+        "properties": {
+          "redirect_url": {
+            "description": "Optional. A public URL, that when defined, will force a redirect for the user.\n",
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/redirect_url"
+          }
+        }
+      },
+      "schemas-PhoneCheckCreatePayload": {
+        "description": "Payload for creating a PhoneCheck",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/components-schemas-CheckCreatePayload"
+          }
+        ]
+      },
+      "schemas-PhoneCheckCreateResponse": {
+        "description": "A PhoneCheck Created response",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PhoneCheckCreatePartial"
+          }
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "ACCEPTED",
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "snapshot_balance": 99,
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "ttl": 120,
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/phone_checks/v0.2/checks/{check_id}"
+            },
+            "check_url": {
+              "href": "https://eu.api.tru.id/phone_checks/v0.2/checks/{check_id}/redirect"
+            }
+          }
+        }
+      },
+      "CheckPatchPayload": {
+        "type": "array",
+        "properties": {
+          "op": {
+            "description": "The operation to be performed",
+            "type": "string",
+            "example": "add"
+          },
+          "path": {
+            "description": "A JSON-Pointer",
+            "type": "string",
+            "enum": [
+              "/code"
+            ],
+            "example": "/code"
+          },
+          "value": {
+            "description": "The value to be used within the operations. The `code` is retrieved by making a POST request to the `check_url` and extracting it from the response body.",
+            "type": "string",
+            "example": "code"
+          }
+        },
+        "required": [
+          "op path value"
+        ],
+        "example": [
+          {
+            "op": "add",
+            "path": "/code",
+            "value": "code"
+          }
+        ]
+      },
+      "PhoneCheckPatchPayload": {
+        "description": "Payload for creating a PhoneCheck",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckPatchPayload"
+          }
+        ]
+      },
+      "CheckPatchPartial": {
+        "type": "object",
+        "properties": {
+          "check_id": {
+            "description": "The unique ID of the Check resource",
+            "type": "string"
+          },
+          "reference_id": {
+            "description": "A field that you can use to track the check request against your own internal reference. Do not use any Personally identifiable information (PII).",
+            "type": "string",
+            "example": "my_internal_reference"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "match": {
+            "description": "Identifies if the Check request resulted in a successful match between the phone number and the mobile connection that the\n`check_url` was accessed from.\n",
+            "type": "boolean"
+          },
+          "charge_amount": {
+            "description": "The amount that was charge for this Check",
+            "type": "number"
+          },
+          "charge_currency": {
+            "description": "The currency the `charge_amount` was made in.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ]
+          },
+          "created_at": {
+            "description": "When the Check was created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "updated_at": {
+            "description": "When the Check was last updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "match",
+          "charge_amount",
+          "charge_currency",
+          "created_at",
+          "updated_at"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "match": true,
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "updated_at": "2020-06-01T16:43:30+00:00"
+        }
+      },
+      "schemas-CheckPatchPartial": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckPatchPartial"
+          }
+        ]
+      },
+      "PhoneCheckPatchPartial": {
+        "description": "A PhoneCheck Resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckPatchPartial"
+          }
+        ]
+      },
+      "SubscriberCheckErrorCode": {
+        "description": "An optional attribute displayed when the `status` returned is `\"ERROR\"`\n- `not_mobile_ip`: The IP address the request was made from is not a mobile IP address.\n- `mno_not_supported`: The MNO is not supported.\n- `mno_timeout`: The request timed out with the MNO.\n- `mno_user_not_found`: The supplied phone number is not recognized by the MNO, it might be associated with an unsupported MVNO.\n- `mno_response_error`: The MNO responded with an invalid response.\n- `mno_server_error`: An error occured with the MNO.\n",
+        "type": "string"
+      },
+      "NoSimChange": {
+        "description": "Indicates if the SIM card **has not** been changed in the last 7 days.\nThe value is `true` if the SIM card **has not** been changed.\nThe value is `false` if the SIM card **has** been changed.\n",
+        "type": "boolean"
+      },
+      "SimChangeWithin": {
+        "description": "Indicates a window of time elapsed since SIM change was detected.\nOnly returned if the MNO provides this information.\n\n| `sim_change_within` | What this means   |\n| ------------------- | ----------------- |\n| 60                  | 0 - 1h            |\n| 360                 | 1h01m - 6h        |\n| 720                 | 6h01m - 12h       |\n| 1440                | 12h01m - 24h      |\n| 2880                | 1d01m - 2d        |\n| 4320                | 2d01m - 3d        |\n| 10080               | 3d01m - 7d        |\n| 43200               | 7d01m - 30d       |\n| 129600              | 30d01m - 90d      |\n| 259200              | 90d01m - 180d     |\n| 525600              | 180d01m - 365d    |\n| 525601              | > 365d            |\n",
+        "type": "integer"
+      },
+      "SubscriberCheckPartial": {
+        "description": "A SubscriberCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "error_code": {
+                "$ref": "#/components/schemas/SubscriberCheckErrorCode"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "no_sim_change": {
+                "$ref": "#/components/schemas/NoSimChange"
+              },
+              "sim_change_within": {
+                "$ref": "#/components/schemas/SimChangeWithin"
+              }
+            }
+          }
+        ]
+      },
+      "SubscriberCheck": {
+        "description": "A SubscriberCheck Resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubscriberCheckPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "match": {
+                "description": "Identifies if the Check request resulted in a successful match between the phone number and the mobile connection that the\n`check_url` was accessed from.\n",
+                "type": "boolean"
+              }
+            },
+            "example": {
+              "match": true
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "description": "The link to the current resource",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  },
+                  "check_url": {
+                    "description": "A URL that the mobile client must navigate as part of the SubscriberCheck verification flow.",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "self"
+                ]
+              }
+            }
+          }
+        ],
+        "required": [
+          "_links"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "match": true,
+          "no_sim_change": false,
+          "sim_change_within": 43201,
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "network_id": "23599",
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/subscriber_checks/v0.1/checks/{check_id}"
+            }
+          }
+        }
+      },
+      "SubscriberCheckCollection": {
+        "description": "A Collection of SubscriberCheck resources",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageBasedPaginationBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "$ref": "#/components/schemas/PaginationLinks.v1"
+              },
+              "_embedded": {
+                "description": "Resources related to the resource request",
+                "type": "object",
+                "properties": {
+                  "checks": {
+                    "description": "The SubscriberChecks within the collection",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SubscriberCheck"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SubscriberCheckCreatePayload": {
+        "description": "Payload for creating a SubscriberCheck",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/components-schemas-CheckCreatePayload"
+          }
+        ]
+      },
+      "SubscriberCheckCreatePartial": {
+        "description": "A SubscriberCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckCreatePartial"
+          }
+        ]
+      },
+      "SubscriberCheckCreateResponse": {
+        "description": "A Subscriber Created response",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubscriberCheckCreatePartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "description": "The current status of the PhoneCheck",
+                "type": "string",
+                "enum": [
+                  "ACCEPTED"
+                ],
+                "example": "ACCEPTED"
+              },
+              "snapshot_balance": {
+                "description": "The workspace balance in `charge_currency` taking into account the `charge_amount`.\nThis property is not persisted and is only returned when the SubscriberCheck is initially created.\n",
+                "type": "number",
+                "example": 100
+              },
+              "_links": {
+                "description": "Links related to the current resource",
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "description": "The link to the current resource",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  },
+                  "check_url": {
+                    "description": "A URL that the mobile client must navigate as part of the SubscriberCheck verification flow.",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "self",
+                  "check_url"
+                ]
+              }
+            }
+          }
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "ACCEPTED",
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "snapshot_balance": 99,
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "ttl": 120,
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/subscriber_checks/v0.1/checks/{check_id}"
+            },
+            "check_url": {
+              "href": "https://eu.api.tru.id/subscriber_checks/v0.1/checks/{check_id}/redirect"
+            }
+          }
+        }
+      },
+      "SubscriberCheckCallbackPartial": {
+        "description": "A SubscriberCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "no_sim_change": {
+                "$ref": "#/components/schemas/NoSimChange"
+              },
+              "sim_change_within": {
+                "$ref": "#/components/schemas/SimChangeWithin"
+              }
+            }
+          }
+        ]
+      },
+      "SubscriberCheckCallbackPayload": {
+        "description": "The payload sent to a callback URL upon a SubscriberCheck reaching an end state.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubscriberCheckCallbackPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "match": {
+                "description": "Identifies if the Check request resulted in a successful match between the phone number and the mobile connection that the\n`check_url` was accessed from.\n",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "match"
+            ],
+            "example": {
+              "match": true
+            }
+          }
+        ]
+      },
+      "SubscriberCheckPatchPayload": {
+        "description": "Payload for creating a SubscriberCheck",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckPatchPayload"
+          }
+        ]
+      },
+      "SubscriberCheckPatchPartial": {
+        "description": "A PhoneCheck Resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckPatchPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "no_sim_change": {
+                "$ref": "#/components/schemas/NoSimChange"
+              },
+              "sim_change_within": {
+                "$ref": "#/components/schemas/SimChangeWithin"
+              }
+            }
+          }
+        ]
+      },
+      "schemas-SubscriberCheck": {
+        "description": "A SubscriberCheck Resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubscriberCheckPartial"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "match": {
+                "description": "Identifies if the Check request resulted in a successful match between the phone number and the mobile connection that the\n`check_url` was accessed from.\n",
+                "type": "boolean"
+              }
+            },
+            "example": {
+              "match": true
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "description": "The link to the current resource",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  },
+                  "check_url": {
+                    "description": "A URL that the mobile client must navigate as part of the SubscriberCheck verification flow.",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Link.v1"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "self"
+                ]
+              }
+            }
+          }
+        ],
+        "required": [
+          "_links"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "match": true,
+          "no_sim_change": true,
+          "sim_change_within": 43201,
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "network_id": "23599",
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/subscriber_checks/v0.1/checks/{check_id}"
+            }
+          }
+        }
+      },
+      "schemas-SubscriberCheckCollection": {
+        "description": "A Collection of SubscriberCheck resources",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageBasedPaginationBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "$ref": "#/components/schemas/PaginationLinks.v1"
+              },
+              "_embedded": {
+                "description": "Resources related to the resource request",
+                "type": "object",
+                "properties": {
+                  "checks": {
+                    "description": "The SubscriberChecks within the collection",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/schemas-SubscriberCheck"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "schemas-SubscriberCheckCreatePayload": {
+        "description": "Payload for creating a SubscriberCheck",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/schemas-CheckCreatePayload"
+          }
+        ]
+      },
+      "SimCheckStatus": {
+        "description": "- `COMPLETED`: The Check request has completed\n- `ERROR`: The resource was created but there was a problem performing the lookup with MNO (Mobile Network Operator).\n",
+        "type": "string",
+        "enum": [
+          "COMPLETED",
+          "ERROR"
+        ],
+        "example": "COMPLETED"
+      },
+      "SimCheckErrorCode": {
+        "description": "An optional attribute displayed when the `status` returned is `\"ERROR\"`\n- `mno_user_not_found`: The supplied phone number is not recognized by the MNO, it might be associated with an unsupported MVNO.\n- `mno_response_error`: The MNO responded with an invalid response.\n- `mno_server_error`: An error occured with the MNO.\n",
+        "type": "string"
+      },
+      "SimCheck": {
+        "description": "The payload sent to a callback URL upon a SimCheck reaching an end state.",
+        "properties": {
+          "check_id": {
+            "description": "The unique ID of the Check resource",
+            "type": "string"
+          },
+          "reference_id": {
+            "description": "A field that you can use to track the check request against your own internal reference. Do not use any Personally identifiable information (PII).",
+            "type": "string",
+            "example": "my_internal_reference"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SimCheckStatus"
+          },
+          "no_sim_change": {
+            "$ref": "#/components/schemas/NoSimChange"
+          },
+          "sim_change_within": {
+            "$ref": "#/components/schemas/SimChangeWithin"
+          },
+          "charge_amount": {
+            "description": "The amount that was charge for this Check",
+            "type": "number"
+          },
+          "network_id": {
+            "description": "The network identifier. Only returned when `status` is `\"COMPLETED\"`.",
+            "type": "string"
+          },
+          "charge_currency": {
+            "description": "The currency the `charge_amount` was made in.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ]
+          },
+          "error_code": {
+            "$ref": "#/components/schemas/SimCheckErrorCode"
+          },
+          "created_at": {
+            "description": "When the Check was created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "_links": {
+            "description": "Links related to the current resource",
+            "type": "object",
+            "properties": {
+              "self": {
+                "description": "The link to the current resource",
+                "$ref": "#/components/schemas/Link.v1"
+              }
+            },
+            "required": [
+              "self"
+            ]
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "charge_amount",
+          "charge_currency",
+          "created_at",
+          "_links"
+        ],
+        "example": {
+          "check_id": "c69bc0e6-a429-11ea-bb37-0242ac130002",
+          "status": "COMPLETED",
+          "no_sim_change": false,
+          "sim_change_within": 43201,
+          "charge_amount": 1,
+          "charge_currency": "API",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "network_id": "23599",
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/subscriber_checks/v0.1/checks/{check_id}"
+            }
+          }
+        }
+      },
+      "SimCheckCollection": {
+        "description": "A SIMCheck resource",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageBasedPaginationBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "$ref": "#/components/schemas/PaginationLinks.v1"
+              },
+              "_embedded": {
+                "description": "Resources related to the resource request",
+                "type": "object",
+                "properties": {
+                  "checks": {
+                    "description": "The SIMChecks within the collection",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SimCheck"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SimCheckCreatePayload": {
+        "description": "Payload for creating a SIMCheck",
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "description": "The phone number to be checked in [E.164 format](https://www.itu.int/rec/T-REC-E.164-201011-I/en)",
+            "type": "string",
+            "example": "447700900000",
+            "format": "E.164"
+          },
+          "phone_ip": {
+            "description": "Optional. The IP address (IPv4 or IPv6 format) of the mobile device associated with the phone number",
+            "type": "string",
+            "example": "127.0.0.1"
+          },
+          "reference_id": {
+            "description": "Optional. A field that you can use to track the check request against your own internal reference. Do not use any Personally identifiable information (PII).",
+            "type": "string",
+            "example": "my_internal_reference"
+          }
+        },
+        "required": [
+          "phone_number"
+        ],
+        "example": {
+          "phone_number": "447700900000",
+          "reference_id": "my_internal_reference"
+        }
+      },
+      "FactorStatus": {
+        "description": "- `PENDING`: The Factor needs to be validated by the user\n- `ACTIVE`: The Factor is active and can be used to create Challenges\n- `INACTIVE`: The Factor is inactive and cannot be used\n",
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "ACTIVE",
+          "INACTIVE"
+        ],
+        "example": "ACTIVE"
+      },
+      "FactorType": {
+        "description": "- `TOTP`: The Factor can be used to create TOTP challenges\n- `PUSH`: The Factor can be used to create push notification challenges\n",
+        "type": "string",
+        "enum": [
+          "TOTP",
+          "PUSH"
+        ],
+        "example": "TOTP"
+      },
+      "Factor": {
+        "type": "object",
+        "properties": {
+          "factor_id": {
+            "description": "The unique ID of the Factor resource",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FactorStatus"
+          },
+          "type": {
+            "$ref": "#/components/schemas/FactorType"
+          },
+          "external_user_id": {
+            "description": "The ID that identifies the User associated with this Factor. It can be your platform's\ninternal user ID, a username, email, etc.\n",
+            "type": "string",
+            "example": "test_user@example.com"
+          },
+          "url": {
+            "description": "The TOTP url used to onboard this factor",
+            "type": "string",
+            "example": "otpauth://totp/some-path-goes-here"
+          },
+          "data_url": {
+            "description": "The base64 QR code image representation of the `url` property",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the Factor was created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "updated_at": {
+            "description": "When the Factor was last updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "_links": {
+            "description": "Links related to the current resource",
+            "type": "object",
+            "properties": {
+              "self": {
+                "description": "The link to the current resource",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Link.v1"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "self"
+            ]
+          }
+        },
+        "required": [
+          "factor_id",
+          "status",
+          "type",
+          "external_user_id",
+          "url",
+          "data_url",
+          "created_at",
+          "updated_at",
+          "_links"
+        ],
+        "example": {
+          "factor_id": "5995afaf-f5d1-47ab-b586-50ad46904eec",
+          "status": "PENDING",
+          "type": "TOTP",
+          "external_user_id": "test_user@example.com",
+          "url": "otpauth://totp/some-path",
+          "data_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAV4AAAFeAQAAAADlUEq3AAAEk0lEQVR4Xu2aQW7jMAxFGXjhZY7gmyQXC5AAvph9Ex8hSy8Ca/77SlulLQbdDDAsrIURV88BTFLkJ9MoP1+P+PyXv6wdbtcOt2uH27XD7drhdlU4tIa+3LtlPcUl+ikuutXmyk6ZdOlTw2wM/XRk9zgucSjjsh7uemzWF5S5IplhXj9ORz8xllVwifMdU2CN+Y6t0sN2d7/JJPh3WP3sdizLb4FlgwehLP8KVgBjjUP5HbA+DNqqp7YogB/cXQsHdvgczwnhys33y/eXKb6mr++4/xeuazve8PlNCAnKGfjw9LRXXpjsM6xn5VitbrFx9DccXw/xrTVdRvgUnRLt/crh1G7ByeSmlWdlnBEqMewTWqajzuUsd69n3A0c1FDMNCSHXU6KtYC44sKiPISny6Jq2makjLBubYNb6OKNsfSbFJ7LicrnyFclhoXIEKcqCGSXiRO6hU4tCs8hkBu2NezVsqEPyEjaBdEhVjxLKaSGcaguYtCsC56WFhAXhLdSVUcIJIaVjG7Ingv10utGTblSNDuq6dhYIyMcKifFItUmibP+7vPLBvGsLJUadpUsnNBijX7C3ROPnQKfv8RzRrhGcaEdJtva0yDEOJEtM+WGsUFY9igZiQtSrsvJQWbyqW0PbD7YTX8gygv1Q4aQpyV26hcE4g4sLwwSbj3kc2RAuIN0sVEwYKHk8IYyP9Xpm96cW7m7Iw4ommYyw8HSSweeFmyNPoXj+YpaHxtrZIR7K3OdUJSqqgt2KSSo2mrxWG4YAc4JxbWCKSdusEhLbpZfD2w+WNbAq3fkqqKYHEtvNVZBwG5yeEXS6aXjPeUyNJYNMA5x8KJyE8IknmoDp9daJet8Q8XGFkoOE8+0+pzVt9x0Ygzu8/uppmSEN8b5wI7sqoLOzADcQW6yVXKYs1rHGAggZ6S+1ksku26N5YVxqDNSeJfeyhd0nU4tc7jcsP4mawRjKkS5s21QSeggB6el3DARuyh2H5RK3pyBOGObleRbiPGPjJQR9lzK3TH+5VklKBKtvY/sidzwimsDQwTplVFxrB6sBk0I4x2wvDBTUzaCYT9qDp+jD5SGfXRHgiEz7JpCw1Fqy0iXNTPu4IKFoBLDwX8n+DcMj216N4/PmUdQbEpjjZQw74sNfGClVFGvvqWcrP4BIDXck2OZauBz1ZQJIbe5g/RvNi9FMyOszMrEhg4ydEKrzDOHrqvPpobpET27YYqjlKtncDcx/lTmbYVNCPt9lVllg1l2sa6TSW70VsXh3RTNjLBv33XdwKSDGA9Sri3Uvbo7Hfzm0AcdFUWT8PbG4atwzQj7g2B51YJgIp6DjDTTifCpiY2ccEH7jLhWSpXz+/YJxaPKWb8wK6z31e38/BWqvImdjk/qk8nFuWH58jFUscNcqjgDz26MMUlhDpcbloazpGO389xbAaxb4hm7tPGcFra7qzLnCes6ZaSRisOz6eGqABBAMgnSQPXST7j9ZyWGC/E8PXcZU3XvJrkuPsS5YW1QRKxzgqBm+M1QR49F9fmHuzPCP1w73K4dbtcOt2uH27XD7fqH8B8OUEqjs47gFQAAAABJRU5ErkJggg==",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "updated_at": "2020-06-01T16:43:30+00:00",
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/authenticator/v0.1/factors/{factor_id}"
+            }
+          }
+        }
+      },
+      "FactorCollection": {
+        "description": "A collection of Factor resources",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageBasedPaginationBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "$ref": "#/components/schemas/PaginationLinks.v1"
+              },
+              "_embedded": {
+                "description": "Resources related to the resource request",
+                "type": "object",
+                "properties": {
+                  "factors": {
+                    "description": "The Factors within the collection",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Factor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "FactorCreatePayload": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "description": "The phone number to be checked in [E.164 format](https://www.itu.int/rec/T-REC-E.164-201011-I/en)",
+            "type": "string",
+            "example": "447700900000",
+            "format": "E.164"
+          },
+          "external_user_id": {
+            "description": "The ID that identifies the User associated with this Factor. It can be your platform's\ninternal user ID, a username, email, etc.\n\nMust be unique.\n",
+            "type": "string",
+            "example": "test_user@example.com"
+          }
+        },
+        "required": [
+          "phone_number",
+          "external_user_id"
+        ],
+        "example": {
+          "phone_number": "447700900000",
+          "external_user_id": "test_user@example.com"
+        }
+      },
+      "BadRequest": {
+        "description": "Generic 400 Bad Request",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ],
+        "example": {
+          "type": "https://developer.tru.id/docs/reference/api-errors#bad_request",
+          "title": "Bad Request",
+          "detail": "The request body is invalid"
+        }
+      },
+      "NotFound": {
+        "description": "Generic 404 Not Found",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetailsBase"
+          }
+        ]
+      },
+      "FactorActivateOperation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "description": "The operation to be performed",
+            "type": "string",
+            "enum": [
+              "add"
+            ]
+          },
+          "path": {
+            "description": "A JSON-Pointer",
+            "type": "string",
+            "enum": [
+              "/code"
+            ]
+          },
+          "value": {
+            "description": "The value to be used within the operations.",
+            "type": "string",
+            "example": "123456"
+          }
+        },
+        "required": [
+          "op",
+          "path",
+          "value"
+        ]
+      },
+      "FactorUpdateExternalUserIdOperation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "description": "The operation to be performed",
+            "type": "string",
+            "enum": [
+              "replace"
+            ]
+          },
+          "path": {
+            "description": "A JSON-Pointer",
+            "type": "string",
+            "enum": [
+              "/external_user_id"
+            ]
+          },
+          "value": {
+            "description": "The value to be used within the operations.",
+            "type": "string",
+            "example": "new_user_id"
+          }
+        },
+        "required": [
+          "op",
+          "path",
+          "value"
+        ]
+      },
+      "FactorUpdateStatus": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "description": "The operation to be performed",
+            "type": "string",
+            "enum": [
+              "replace"
+            ]
+          },
+          "path": {
+            "description": "A JSON-Pointer",
+            "type": "string",
+            "enum": [
+              "/status"
+            ]
+          },
+          "value": {
+            "description": "The value to be used within the operations.",
+            "type": "string",
+            "enum": [
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "op",
+          "path",
+          "value"
+        ]
+      },
+      "FactorPatchPayload": {
+        "description": "Update a Project.\n\nAn array of JSON-PATCH operations as defined in [RFC 6902](https://tools.ietf.org/html/rfc6902).\n",
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/FactorActivateOperation"
+            },
+            {
+              "$ref": "#/components/schemas/FactorUpdateExternalUserIdOperation"
+            },
+            {
+              "$ref": "#/components/schemas/FactorUpdateStatus"
+            }
+          ]
+        }
+      },
+      "ChallengeStatus": {
+        "description": "- `PENDING`: The Challenge is pending verification\n- `VERIFIED`: The Challenge has been successfully verified\n- `FAILED`: The Challenge has been unsuccessfully verified\n- `EXPIRED`: The Challenge has expired\n",
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "VERIFIED",
+          "FAILED",
+          "EXPIRED"
+        ],
+        "example": "PENDING"
+      },
+      "Challenge": {
+        "type": "object",
+        "properties": {
+          "challenge_id": {
+            "description": "The unique ID of the Challenge resource",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChallengeStatus"
+          },
+          "reference_id": {
+            "description": "The client defined ID of the Challenge resource transaction",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "When the Challenge was created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "updated_at": {
+            "description": "When the Challenge was last updated",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "expired_at": {
+            "description": "When the Challenge expired",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISODateTime"
+              }
+            ]
+          },
+          "_links": {
+            "description": "Links related to the current resource",
+            "type": "object",
+            "properties": {
+              "self": {
+                "description": "The link to the current resource",
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Link.v1"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "self"
+            ]
+          }
+        },
+        "required": [
+          "challenge_id",
+          "status",
+          "created_at",
+          "updated_at",
+          "_links"
+        ],
+        "example": {
+          "challenge_id": "5995afaf-f5d1-47ab-b586-50ad46904eec",
+          "status": "PENDING",
+          "created_at": "2020-06-01T16:43:30+00:00",
+          "updated_at": "2020-06-01T16:43:30+00:00",
+          "_links": {
+            "self": {
+              "href": "https://eu.api.tru.id/authenticator/v0.1/factors/{factor_id}"
+            }
+          }
+        }
+      },
+      "ChallengeCollection": {
+        "description": "A collection of Challenge resources",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PageBasedPaginationBody"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_links": {
+                "description": "Links related to the current resource",
+                "$ref": "#/components/schemas/PaginationLinks.v1"
+              },
+              "_embedded": {
+                "description": "Resources related to the resource request",
+                "type": "object",
+                "properties": {
+                  "factors": {
+                    "description": "The Challenges within the collection",
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Challenge"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ChallengeCreatePushPayload": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "description": "The client defined ID of the Challenge resource transaction",
+            "type": "string"
+          },
+          "check_id": {
+            "description": "The ID of the PhoneCheck to be used by this PUSH Challenge",
+            "type": "string"
+          },
+          "check_url": {
+            "description": "The redirect URL of the PhoneCheck to be used by this PUSH Challenge",
+            "type": "string"
+          },
+          "message": {
+            "description": "The message to be shown in the push notification",
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "check_url"
+        ],
+        "example": {
+          "check_id": "5995afaf-f5d1-47ab-b586-50ad46904eec",
+          "check_url": "https://eu.api.tru.id/phone_checks/v0.2/checks/5995afaf-f5d1-47ab-b586-50ad46904eec/redirect",
+          "message": "Please confirm your login"
+        }
+      },
+      "ChallengeCreateTOTPPayload": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "description": "The client defined ID of the Challenge resource transaction",
+            "type": "string"
+          }
+        },
+        "example": {
+          "reference_id": "test_user_payment_1"
+        }
+      },
+      "ChallengeCreatePayload": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ChallengeCreatePushPayload"
+          },
+          {
+            "$ref": "#/components/schemas/ChallengeCreateTOTPPayload"
+          }
+        ]
+      },
+      "ChallengePatchPayload": {
+        "description": "Update a Challenge originating from a TOTP challenge.\n\nAn array of JSON-PATCH operations as defined in [RFC 6902](https://tools.ietf.org/html/rfc6902).\n",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "op": {
+              "description": "The operation to be performed",
+              "type": "string",
+              "enum": [
+                "add"
+              ]
+            },
+            "path": {
+              "description": "A JSON-Pointer",
+              "type": "string",
+              "enum": [
+                "/code"
+              ]
+            },
+            "value": {
+              "description": "The value to be used within the operations.",
+              "type": "string",
+              "example": "123456"
+            }
+          },
+          "required": [
+            "op",
+            "path",
+            "value"
+          ],
+          "example": {
+            "op": "add",
+            "path": "/code",
+            "value": "123456"
+          }
+        }
+      }
+    }
+  }
+}
